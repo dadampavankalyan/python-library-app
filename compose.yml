@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: dadampavankalyan/myproject:dbimage
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
+  auth_service:
+    image: dadampavankalyan/myproject:authimage
+    ports:
+      - "5001:5001"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: digital_library
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
+  book_service:
+    image: dadampavankalyan/myproject:bookimage
+    ports:
+      - "5002:5002"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: digital_library
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
+  borrow_service:
+    image: dadampavankalyan/myproject:borrowimage
+    ports:
+      - "5003:5003"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: digital_library
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
+  frontend:
+    image: dadampavankalyan/myproject:appimage
+    ports:
+      - "5000:5000"
+    environment:
+      AUTH_URL: http://auth_service:5001
+      BOOK_URL: http://book_service:5002
+      BORROW_URL: http://borrow_service:5003
+    depends_on:
+      - auth_service
+      - book_service
+      - borrow_service
+    deploy:
+      replicas: 1
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: overlay
+    attachable: true
